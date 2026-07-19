@@ -2,6 +2,10 @@
   "appId": "com.billu.guiapatins",
   "appName": "Guia de Patins",
   "webDir": "docs",
+  "server": {
+    "url": "https://oliveiragw93.github.io/guia-patins/",
+    "cleartext": false
+  },
   "backgroundColor": "#15161A",
   "android": {
     "allowMixedContent": false

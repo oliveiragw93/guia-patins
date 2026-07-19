@@ -2,7 +2,7 @@
   "name": "Guia de Patins + Modalidades + Progresso",
   "short_name": "Patins Guia",
   "description": "Guia de progressão de patins in-line (Freeskate/Urban, Slalom, Wizard, Aggressive) e 17 modalidades complementares, com sistema de maestria e progresso.",
-  "start_url": "./guia-patins-e-modalidades.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

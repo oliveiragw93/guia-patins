@@ -6,7 +6,7 @@
 
 const CACHE_NAME = 'guia-patins-v1'; // troque para v2, v3... a cada nova versão publicada, para forçar atualização do cache
 const APP_SHELL = [
-  './guia-patins-e-modalidades.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -38,6 +38,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./guia-patins-e-modalidades.html')))
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
   );
 });
