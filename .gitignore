@@ -7,3 +7,4 @@ android/app/release/
 *.apk
 *.aab
 .DS_Store
+.idea/
