@@ -1,0 +1,13 @@
+{
+  "name": "guia-patins",
+  "compatibility_date": "2026-07-19",
+  "main": "worker.js",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "kv_namespaces": [
+    { "binding": "SYNC_KV", "id": "31312b3560a6436a8280f37f3dec34e9" }
+  ]
+}
