@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // Configuração de sincronização — deixe null se esta cópia for servida pelo
+  // MESMO domínio do Worker (ex: hospedado direto na Cloudflare via wrangler).
+  // Se esta cópia for servida de outro lugar (GitHub Pages, Capacitor, etc.),
+  // defina aqui a URL completa do Worker + "/api" pra sincronização funcionar
+  // entre domínios diferentes.
+  window.SYNC_API_OVERRIDE = 'https://guia-patins.oliveiragw93.workers.dev/api'; // PREVISTO — confirme a URL real depois do deploy (Passo 3 do SETUP-SINCRONIZACAO.md)
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#15161A">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20108%20108%22%3E%3Crect%20width%3D%22108%22%20height%3D%22108%22%20rx%3D%2222%22%20fill%3D%22%2315161A%22/%3E%3Ccircle%20cx%3D%2254%22%20cy%3D%2250%22%20r%3D%2226%22%20fill%3D%22none%22%20stroke%3D%22%23F2C230%22%20stroke-width%3D%226.2%22/%3E%3Ccircle%20cx%3D%2254%22%20cy%3D%2250%22%20r%3D%228%22%20fill%3D%22%23F2C230%22/%3E%3Cg%20stroke%3D%22%23F2C230%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%3E%3Cline%20x1%3D%2254%22%20y1%3D%2250%22%20x2%3D%2254%22%20y2%3D%2231%22/%3E%3Cline%20x1%3D%2254%22%20y1%3D%2250%22%20x2%3D%2270.5%22%20y2%3D%2240.5%22/%3E%3Cline%20x1%3D%2254%22%20y1%3D%2250%22%20x2%3D%2270.5%22%20y2%3D%2259.5%22/%3E%3Cline%20x1%3D%2254%22%20y1%3D%2250%22%20x2%3D%2237.5%22%20y2%3D%2259.5%22/%3E%3Cline%20x1%3D%2254%22%20y1%3D%2250%22%20x2%3D%2237.5%22%20y2%3D%2240.5%22/%3E%3C/g%3E%3Crect%20x%3D%2212%22%20y%3D%2280%22%20width%3D%2230%22%20height%3D%228%22%20rx%3D%224%22%20fill%3D%22%23F2C230%22%20transform%3D%22rotate%28-8%2027%2084%29%22/%3E%3C/svg%3E">
@@ -275,6 +283,28 @@ html,body{ margin:0; }
   background:rgba(13,14,17,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
 }
 .toggle-bar-inner{ display:flex; gap:10px; max-width:1180px; margin:0 auto; }
+
+.account-btn{
+  flex:none; align-self:center; background:var(--surface2); border:1px solid var(--line);
+  border-radius:20px; padding:8px 14px; cursor:pointer;
+}
+.account-btn:hover{ border-color:var(--text-dim); }
+.sync-badge{ font-family:var(--mono); font-size:11px; color:var(--text-faint); white-space:nowrap; }
+.sync-badge.sync-synced{ color:var(--green); }
+.sync-badge.sync-syncing{ color:var(--cyan); }
+.sync-badge.sync-error{ color:var(--orange); }
+.sync-badge.sync-offline{ color:var(--text-faint); }
+
+@media (max-width:640px){
+  .account-btn{ padding:8px 10px; }
+  .account-btn .sync-badge{ font-size:0; }
+  .account-btn .sync-badge::before{ content:"👤"; font-size:15px; }
+  .account-btn .sync-badge.sync-synced::before{ content:"✓"; }
+  .account-btn .sync-badge.sync-syncing::before{ content:"↻"; }
+  .account-btn .sync-badge.sync-error::before{ content:"⚠"; }
+  .account-btn .sync-badge.sync-offline::before{ content:"📴"; }
+}
+
 .toggle-tab{
   flex:1; position:relative; display:flex; align-items:center; gap:12px;
   background:none; background-color:transparent;
@@ -633,6 +663,29 @@ html,body{ margin:0; }
 }
 .celeb-btn-secondary:hover{ border-color:var(--text-dim); color:var(--text); }
 
+.account-modal-backdrop{
+  display:none; position:fixed; inset:0; z-index:600; background:rgba(8,9,11,.78); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.account-modal-backdrop.open{ display:flex; }
+.account-modal{
+  position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg);
+  max-width:360px; width:100%; padding:28px 24px 24px; text-align:center;
+}
+.account-desc{ font-size:12.5px; color:var(--text-dim); line-height:1.6; margin:6px 0 18px; }
+.account-tabs{ display:flex; gap:6px; margin-bottom:16px; background:var(--surface2); border-radius:9px; padding:4px; }
+.account-tab{
+  flex:1; background:none; border:none; color:var(--text-faint); font-family:var(--body); font-size:12.5px;
+  padding:8px; border-radius:7px; cursor:pointer;
+}
+.account-tab.on{ background:var(--yellow); color:#1a1a12; font-weight:600; }
+#acctLoginForm input, #acctRegisterForm input, #acctChangePassForm input{
+  width:100%; background:var(--surface2); border:1px solid var(--line); color:var(--text);
+  padding:10px 12px; border-radius:9px; font-family:var(--body); font-size:13px; margin-bottom:8px;
+}
+.account-error{ color:var(--orange); font-size:11.5px; text-align:left; margin:-2px 0 8px; min-height:0; }
+.account-success{ color:var(--green); font-size:11.5px; text-align:left; margin:-2px 0 8px; }
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   html{scroll-behavior:auto;}
@@ -663,6 +716,9 @@ html,body{ margin:0; }
         <div class="tab-label">Progresso</div>
         <div class="tab-sub" id="miniProgressIndicator">Nv.1 · 0 XP · 🔥0</div>
       </div>
+    </button>
+    <button class="account-btn" onclick="openAccountModal()" title="Conta e sincronização">
+      <span id="syncBadge" class="sync-badge sync-guest">👤 sem conta</span>
     </button>
   </div>
 </div>
@@ -973,6 +1029,51 @@ html,body{ margin:0; }
   </div>
 </div>
 
+<!-- ===== Conta e sincronização — modal único, dois estados (visitante / logado) ===== -->
+<div class="account-modal-backdrop" id="accountModalBackdrop" onclick="if(event.target===this) closeAccountModal()">
+  <div class="account-modal">
+    <button class="media-modal-close" onclick="closeAccountModal()" aria-label="Fechar">✕</button>
+
+    <div id="acctGuestView">
+      <div class="celeb-eyebrow">Conta e sincronização</div>
+      <div class="celeb-title" style="font-size:19px;">Entrar ou criar conta</div>
+      <p class="account-desc">Sincroniza seu progresso entre aparelhos automaticamente. Totalmente opcional — o app já funciona normalmente sem conta, salvando neste aparelho.</p>
+      <div class="account-tabs">
+        <button class="account-tab on" id="acctTabLogin" onclick="switchAccountTab('login')" type="button">Entrar</button>
+        <button class="account-tab" id="acctTabRegister" onclick="switchAccountTab('register')" type="button">Criar conta</button>
+      </div>
+      <form id="acctLoginForm" onsubmit="return handleAccountLogin(event)">
+        <input type="text" id="acctLoginUser" placeholder="usuário" autocomplete="username" required>
+        <input type="password" id="acctLoginPass" placeholder="senha" autocomplete="current-password" required>
+        <div class="account-error" id="acctLoginError"></div>
+        <button type="submit" class="celeb-btn-primary">Entrar</button>
+      </form>
+      <form id="acctRegisterForm" style="display:none" onsubmit="return handleAccountRegister(event)">
+        <input type="text" id="acctRegUser" placeholder="escolha um usuário (3-24 letras/números)" autocomplete="username" required>
+        <input type="password" id="acctRegPass" placeholder="escolha uma senha (mín. 6 caracteres)" autocomplete="new-password" required>
+        <div class="account-error" id="acctRegError"></div>
+        <button type="submit" class="celeb-btn-primary">Criar conta</button>
+      </form>
+      <button class="celeb-btn-secondary" style="margin-top:10px;" onclick="closeAccountModal()">Continuar sem conta</button>
+    </div>
+
+    <div id="acctLoggedView" style="display:none">
+      <div class="celeb-eyebrow">Conta e sincronização</div>
+      <div class="celeb-title" style="font-size:19px;" id="acctUsernameDisplay"></div>
+      <p class="account-desc" id="acctSyncStatusDesc"></p>
+      <button class="celeb-btn-secondary" onclick="toggleChangePasswordForm()" type="button">Trocar senha</button>
+      <form id="acctChangePassForm" style="display:none; margin-top:10px;" onsubmit="return handleChangePassword(event)">
+        <input type="password" id="acctOldPass" placeholder="senha atual" autocomplete="current-password" required>
+        <input type="password" id="acctNewPass" placeholder="nova senha (mín. 6 caracteres)" autocomplete="new-password" required>
+        <div class="account-error" id="acctChangePassError"></div>
+        <div class="account-success" id="acctChangePassSuccess"></div>
+        <button type="submit" class="celeb-btn-primary">Confirmar troca</button>
+      </form>
+      <button class="celeb-btn-secondary" style="margin-top:10px;" onclick="handleAccountLogout()" type="button">Sair da conta</button>
+    </div>
+  </div>
+</div>
+
 <script>
 function switchApp(view){
   document.getElementById('appPatins').classList.toggle('active', view==='patins');
@@ -987,7 +1088,20 @@ function switchApp(view){
 
 /* ================= UTIL ================= */
 function esc(str){ return String(str==null?'':str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ console.error('localStorage indisponível — progresso não salvo', e); } }
+// Precisa ser declarado AQUI (não lá embaixo com o resto do módulo de sync) —
+// lsSet já roda durante a inicialização do app, antes do script terminar de
+// carregar. Como é const, existe uma "zona morta temporal" até esta linha
+// rodar; se essa lista morasse no fim do arquivo, qualquer chamada de lsSet
+// antes disso (e várias acontecem já no carregamento inicial) derrubava o
+// app inteiro com "Cannot access before initialization".
+const SYNC_KEY_PREFIXES = ['painelPatins_', 'painelModalidades_', 'progresso_'];
+function lsSet(k,v){
+  try{ localStorage.setItem(k,v); }catch(e){ console.error('localStorage indisponível — progresso não salvo', e); }
+  if(SYNC_KEY_PREFIXES.some(p=>k.startsWith(p))){
+    try{ localStorage.setItem('sync_local_updated_at', String(Date.now())); }catch(e){}
+    if(typeof scheduleSyncPush==='function') scheduleSyncPush();
+  }
+}
 
 /* ================= DATA ================= */
 const LEVELS = [
@@ -3745,6 +3859,190 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   });
 }
 
+
+/* ================================================================
+   SINCRONIZAÇÃO ENTRE DISPOSITIVOS (login opcional + Cloudflare Worker)
+   Camada por cima do localStorage — nunca substitui. O app funciona 100%
+   offline e sem conta; login só adiciona backup/sincronização automática.
+   ================================================================ */
+
+const SYNC_API_BASE = (window.SYNC_API_OVERRIDE || './api');
+const SYNC_PUSH_DEBOUNCE_MS = 4000;
+
+let syncPushTimer = null;
+let syncStatus = 'guest';
+
+function getSyncToken(){ return localStorage.getItem('sync_token'); }
+function getSyncUsername(){ return localStorage.getItem('sync_username'); }
+function isLoggedIn(){ return !!getSyncToken(); }
+function setSyncSession(token, username){ lsRawSet('sync_token', token); lsRawSet('sync_username', username); }
+function clearSyncSession(){ localStorage.removeItem('sync_token'); localStorage.removeItem('sync_username'); }
+function lsRawSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+function collectSyncableState(){
+  const out = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(SYNC_KEY_PREFIXES.some(p=>k.startsWith(p))) out[k] = localStorage.getItem(k);
+  }
+  return out;
+}
+function applySyncedState(stateObj){
+  if(!stateObj) return;
+  Object.entries(stateObj).forEach(([k,v])=>{ try{ localStorage.setItem(k,v); }catch(e){} });
+}
+function reloadAllFromLocalStorage(){
+  if(typeof loadProgress==='function') loadProgress();
+  if(typeof mLoadProgress==='function') mLoadProgress();
+  if(typeof render==='function') render();
+  if(typeof mRender==='function') mRender();
+  if(document.getElementById('appProgresso')?.classList.contains('active') && typeof renderProgressTab==='function') renderProgressTab();
+}
+
+function setSyncStatus(s){
+  syncStatus = s;
+  const el = document.getElementById('syncBadge');
+  if(!el) return;
+  const labels = { guest:'👤 sem conta', offline:'📴 offline', syncing:'↻ sincronizando…', synced:'✓ sincronizado', error:'⚠ erro de sync' };
+  el.textContent = labels[s] || '';
+  el.className = 'sync-badge sync-' + s;
+  updateAccountModalView();
+}
+
+async function syncApi(path, method, body){
+  const headers = {'Content-Type':'application/json'};
+  const token = getSyncToken();
+  if(token) headers['Authorization'] = 'Bearer '+token;
+  const res = await fetch(SYNC_API_BASE+path, {method, headers, body: body?JSON.stringify(body):undefined});
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok){ const err = new Error(data.error||'erro de sincronização'); err.status=res.status; err.data=data; throw err; }
+  return data;
+}
+
+function scheduleSyncPush(){
+  if(!isLoggedIn()) return;
+  if(!navigator.onLine){ setSyncStatus('offline'); return; }
+  clearTimeout(syncPushTimer);
+  setSyncStatus('syncing');
+  syncPushTimer = setTimeout(pushStateToServer, SYNC_PUSH_DEBOUNCE_MS);
+}
+
+async function pushStateToServer(){
+  if(!isLoggedIn() || !navigator.onLine) return;
+  try{ await syncApi('/state', 'PUT', {state: collectSyncableState()}); setSyncStatus('synced'); }
+  catch(e){ console.error('Falha ao sincronizar (push)', e); setSyncStatus('error'); }
+}
+
+async function pullStateFromServer(){
+  if(!isLoggedIn()) return;
+  setSyncStatus('syncing');
+  try{
+    const data = await syncApi('/state', 'GET');
+    if(data.state){ applySyncedState(data.state); reloadAllFromLocalStorage(); }
+    setSyncStatus('synced');
+  }catch(e){ console.error('Falha ao sincronizar (pull)', e); setSyncStatus('error'); }
+}
+
+window.addEventListener('online', ()=>{ if(isLoggedIn()) pullStateFromServer(); });
+window.addEventListener('offline', ()=> setSyncStatus(isLoggedIn() ? 'offline' : 'guest'));
+
+async function syncRegister(username, password){
+  const data = await syncApi('/register', 'POST', {username, password});
+  setSyncSession(data.token, data.username);
+  await pushStateToServer();
+}
+async function syncLogin(username, password){
+  const localTs = parseInt(localStorage.getItem('sync_local_updated_at')||'0', 10);
+  const data = await syncApi('/login', 'POST', {username, password});
+  setSyncSession(data.token, data.username);
+  const remote = await syncApi('/state', 'GET');
+  if(remote.state && remote.updated_at > localTs){ applySyncedState(remote.state); reloadAllFromLocalStorage(); }
+  else if(localTs > 0){ await pushStateToServer(); }
+  setSyncStatus('synced');
+}
+function syncLogout(){ clearSyncSession(); setSyncStatus('guest'); }
+async function syncChangePassword(oldPassword, newPassword){ await syncApi('/change-password', 'POST', {oldPassword, newPassword}); }
+
+(function initSync(){
+  if(isLoggedIn()){ setSyncStatus(navigator.onLine ? 'syncing' : 'offline'); if(navigator.onLine) pullStateFromServer(); }
+  else{ setSyncStatus('guest'); }
+})();
+
+/* ----- interface do modal de conta ----- */
+function openAccountModal(){
+  document.getElementById('accountModalBackdrop').classList.add('open');
+  updateAccountModalView();
+}
+function closeAccountModal(){
+  document.getElementById('accountModalBackdrop').classList.remove('open');
+  ['acctLoginError','acctRegError','acctChangePassError','acctChangePassSuccess'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+}
+function updateAccountModalView(){
+  const guestView = document.getElementById('acctGuestView');
+  const loggedView = document.getElementById('acctLoggedView');
+  if(!guestView || !loggedView) return;
+  if(isLoggedIn()){
+    guestView.style.display = 'none';
+    loggedView.style.display = 'block';
+    document.getElementById('acctUsernameDisplay').textContent = getSyncUsername() || '';
+    const statusText = { synced:'Sincronizado.', syncing:'Sincronizando…', offline:'Sem internet — sincroniza assim que reconectar.', error:'Falha na última sincronização — vai tentar de novo sozinho.' };
+    document.getElementById('acctSyncStatusDesc').textContent = statusText[syncStatus] || '';
+  } else {
+    guestView.style.display = 'block';
+    loggedView.style.display = 'none';
+  }
+}
+function switchAccountTab(tab){
+  document.getElementById('acctTabLogin').classList.toggle('on', tab==='login');
+  document.getElementById('acctTabRegister').classList.toggle('on', tab==='register');
+  document.getElementById('acctLoginForm').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('acctRegisterForm').style.display = tab==='register' ? 'block' : 'none';
+}
+async function handleAccountLogin(ev){
+  ev.preventDefault();
+  const errEl = document.getElementById('acctLoginError'); errEl.textContent = '';
+  const user = document.getElementById('acctLoginUser').value.trim();
+  const pass = document.getElementById('acctLoginPass').value;
+  try{ await syncLogin(user, pass); closeAccountModal(); }
+  catch(e){ errEl.textContent = e.message || 'Erro ao entrar'; }
+  return false;
+}
+async function handleAccountRegister(ev){
+  ev.preventDefault();
+  const errEl = document.getElementById('acctRegError'); errEl.textContent = '';
+  const user = document.getElementById('acctRegUser').value.trim();
+  const pass = document.getElementById('acctRegPass').value;
+  try{ await syncRegister(user, pass); closeAccountModal(); }
+  catch(e){ errEl.textContent = e.message || 'Erro ao criar conta'; }
+  return false;
+}
+function handleAccountLogout(){ syncLogout(); updateAccountModalView(); }
+function toggleChangePasswordForm(){
+  const form = document.getElementById('acctChangePassForm');
+  form.style.display = form.style.display==='none' ? 'block' : 'none';
+}
+async function handleChangePassword(ev){
+  ev.preventDefault();
+  const errEl = document.getElementById('acctChangePassError'); errEl.textContent = '';
+  const okEl = document.getElementById('acctChangePassSuccess'); okEl.textContent = '';
+  const oldP = document.getElementById('acctOldPass').value;
+  const newP = document.getElementById('acctNewPass').value;
+  try{
+    await syncChangePassword(oldP, newP);
+    okEl.textContent = 'Senha trocada com sucesso.';
+    document.getElementById('acctChangePassForm').reset();
+  }catch(e){ errEl.textContent = e.message || 'Erro ao trocar senha'; }
+  return false;
+}
+
+window.openAccountModal = openAccountModal;
+window.closeAccountModal = closeAccountModal;
+window.switchAccountTab = switchAccountTab;
+window.handleAccountLogin = handleAccountLogin;
+window.handleAccountRegister = handleAccountRegister;
+window.handleAccountLogout = handleAccountLogout;
+window.toggleChangePasswordForm = toggleChangePasswordForm;
+window.handleChangePassword = handleChangePassword;
 </script>
 </body>
 </html>
