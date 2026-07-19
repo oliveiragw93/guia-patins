@@ -9,7 +9,7 @@
   // Se esta cópia for servida de outro lugar (GitHub Pages, Capacitor, etc.),
   // defina aqui a URL completa do Worker + "/api" pra sincronização funcionar
   // entre domínios diferentes.
-  window.SYNC_API_OVERRIDE = 'https://guia-patins.oliveiragw93.workers.dev/api'; // PREVISTO — confirme a URL real depois do deploy (Passo 3 do SETUP-SINCRONIZACAO.md)
+  window.SYNC_API_OVERRIDE = 'https://guia-patins.oliveiragw93.workers.dev/api'; // PREVISTO — confirme a URL real depois do deploy
 </script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#15161A">
@@ -284,26 +284,27 @@ html,body{ margin:0; }
 }
 .toggle-bar-inner{ display:flex; gap:10px; max-width:1180px; margin:0 auto; }
 
+/* Faixa própria pra conta/sincronização — deliberadamente separada da barra de
+   abas, que já estava ajustada e não deveria ser mexida por causa disso.
+   Bem fina, sem contraste de "botão" — só o ícone, e a cor de fundo da própria
+   faixa é quem comunica o status (conectado/sincronizando/etc), não o ícone. */
+.account-strip{
+  padding:2px 0; transition:background-color .35s ease;
+}
+.account-strip.sync-guest{ background:transparent; }
+.account-strip.sync-synced{ background:color-mix(in srgb, var(--green) 9%, transparent); }
+.account-strip.sync-syncing{ background:color-mix(in srgb, var(--cyan) 9%, transparent); }
+.account-strip.sync-offline{ background:color-mix(in srgb, var(--text-faint) 7%, transparent); }
+.account-strip.sync-error{ background:color-mix(in srgb, var(--orange) 12%, transparent); }
+.account-strip-inner{
+  display:flex; justify-content:flex-end; max-width:1180px; margin:0 auto; padding:0 16px;
+}
 .account-btn{
-  flex:none; align-self:center; background:var(--surface2); border:1px solid var(--line);
-  border-radius:20px; padding:8px 14px; cursor:pointer;
+  background:none; border:none; cursor:pointer; padding:3px 6px; border-radius:6px;
+  display:flex; align-items:center; opacity:.65; line-height:1;
 }
-.account-btn:hover{ border-color:var(--text-dim); }
-.sync-badge{ font-family:var(--mono); font-size:11px; color:var(--text-faint); white-space:nowrap; }
-.sync-badge.sync-synced{ color:var(--green); }
-.sync-badge.sync-syncing{ color:var(--cyan); }
-.sync-badge.sync-error{ color:var(--orange); }
-.sync-badge.sync-offline{ color:var(--text-faint); }
-
-@media (max-width:640px){
-  .account-btn{ padding:8px 10px; }
-  .account-btn .sync-badge{ font-size:0; }
-  .account-btn .sync-badge::before{ content:"👤"; font-size:15px; }
-  .account-btn .sync-badge.sync-synced::before{ content:"✓"; }
-  .account-btn .sync-badge.sync-syncing::before{ content:"↻"; }
-  .account-btn .sync-badge.sync-error::before{ content:"⚠"; }
-  .account-btn .sync-badge.sync-offline::before{ content:"📴"; }
-}
+.account-btn:hover{ opacity:1; background:rgba(255,255,255,.06); }
+.sync-badge{ font-size:13px; }
 
 .toggle-tab{
   flex:1; position:relative; display:flex; align-items:center; gap:12px;
@@ -694,6 +695,14 @@ html,body{ margin:0; }
 </head>
 <body>
 
+<div class="account-strip sync-guest" id="accountStrip">
+  <div class="account-strip-inner">
+    <button class="account-btn" onclick="openAccountModal()">
+      <span id="syncBadge" class="sync-badge sync-guest">👤</span>
+    </button>
+  </div>
+</div>
+
 <div class="toggle-bar">
   <div class="toggle-bar-inner">
     <button data-view="patins" class="toggle-tab active" onclick="switchApp('patins')" style="--tab-color:var(--cyan)">
@@ -716,9 +725,6 @@ html,body{ margin:0; }
         <div class="tab-label">Progresso</div>
         <div class="tab-sub" id="miniProgressIndicator">Nv.1 · 0 XP · 🔥0</div>
       </div>
-    </button>
-    <button class="account-btn" onclick="openAccountModal()" title="Conta e sincronização">
-      <span id="syncBadge" class="sync-badge sync-guest">👤 sem conta</span>
     </button>
   </div>
 </div>
@@ -1050,7 +1056,7 @@ html,body{ margin:0; }
       </form>
       <form id="acctRegisterForm" style="display:none" onsubmit="return handleAccountRegister(event)">
         <input type="text" id="acctRegUser" placeholder="escolha um usuário (3-24 letras/números)" autocomplete="username" required>
-        <input type="password" id="acctRegPass" placeholder="escolha uma senha (mín. 6 caracteres)" autocomplete="new-password" required>
+        <input type="password" id="acctRegPass" placeholder="escolha uma senha" autocomplete="new-password" required>
         <div class="account-error" id="acctRegError"></div>
         <button type="submit" class="celeb-btn-primary">Criar conta</button>
       </form>
@@ -1061,14 +1067,25 @@ html,body{ margin:0; }
       <div class="celeb-eyebrow">Conta e sincronização</div>
       <div class="celeb-title" style="font-size:19px;" id="acctUsernameDisplay"></div>
       <p class="account-desc" id="acctSyncStatusDesc"></p>
-      <button class="celeb-btn-secondary" onclick="toggleChangePasswordForm()" type="button">Trocar senha</button>
+
+      <button class="celeb-btn-secondary" onclick="toggleChangeUsernameForm()" type="button">Trocar usuário</button>
+      <form id="acctChangeUserForm" style="display:none; margin-top:10px;" onsubmit="return handleChangeUsername(event)">
+        <input type="text" id="acctNewUsername" placeholder="novo nome de usuário" autocomplete="username" required>
+        <input type="password" id="acctUserChangePass" placeholder="senha atual (pra confirmar)" autocomplete="current-password" required>
+        <div class="account-error" id="acctChangeUserError"></div>
+        <div class="account-success" id="acctChangeUserSuccess"></div>
+        <button type="submit" class="celeb-btn-primary">Confirmar troca de usuário</button>
+      </form>
+
+      <button class="celeb-btn-secondary" style="margin-top:8px;" onclick="toggleChangePasswordForm()" type="button">Trocar senha</button>
       <form id="acctChangePassForm" style="display:none; margin-top:10px;" onsubmit="return handleChangePassword(event)">
         <input type="password" id="acctOldPass" placeholder="senha atual" autocomplete="current-password" required>
-        <input type="password" id="acctNewPass" placeholder="nova senha (mín. 6 caracteres)" autocomplete="new-password" required>
+        <input type="password" id="acctNewPass" placeholder="nova senha" autocomplete="new-password" required>
         <div class="account-error" id="acctChangePassError"></div>
         <div class="account-success" id="acctChangePassSuccess"></div>
         <button type="submit" class="celeb-btn-primary">Confirmar troca</button>
       </form>
+
       <button class="celeb-btn-secondary" style="margin-top:10px;" onclick="handleAccountLogout()" type="button">Sair da conta</button>
     </div>
   </div>
@@ -3902,10 +3919,14 @@ function reloadAllFromLocalStorage(){
 function setSyncStatus(s){
   syncStatus = s;
   const el = document.getElementById('syncBadge');
+  const strip = document.getElementById('accountStrip');
   if(!el) return;
-  const labels = { guest:'👤 sem conta', offline:'📴 offline', syncing:'↻ sincronizando…', synced:'✓ sincronizado', error:'⚠ erro de sync' };
-  el.textContent = labels[s] || '';
+  const icons = { guest:'👤', offline:'📴', syncing:'↻', synced:'✓', error:'⚠' };
+  const labels = { guest:'Sem conta — toque pra sincronizar entre aparelhos', offline:'Offline — sincroniza quando reconectar', syncing:'Sincronizando…', synced:'Sincronizado', error:'Erro ao sincronizar — toque pra ver detalhes' };
+  el.textContent = icons[s] || '';
   el.className = 'sync-badge sync-' + s;
+  el.parentElement.title = labels[s] || '';
+  if(strip) strip.className = 'account-strip sync-' + s;
   updateAccountModalView();
 }
 
@@ -3962,6 +3983,10 @@ async function syncLogin(username, password){
 }
 function syncLogout(){ clearSyncSession(); setSyncStatus('guest'); }
 async function syncChangePassword(oldPassword, newPassword){ await syncApi('/change-password', 'POST', {oldPassword, newPassword}); }
+async function syncChangeUsername(newUsername, password){
+  const data = await syncApi('/change-username', 'POST', {newUsername, password});
+  setSyncSession(data.token, data.username); // token antigo referenciava o username anterior — troca pelo novo
+}
 
 (function initSync(){
   if(isLoggedIn()){ setSyncStatus(navigator.onLine ? 'syncing' : 'offline'); if(navigator.onLine) pullStateFromServer(); }
@@ -3975,7 +4000,7 @@ function openAccountModal(){
 }
 function closeAccountModal(){
   document.getElementById('accountModalBackdrop').classList.remove('open');
-  ['acctLoginError','acctRegError','acctChangePassError','acctChangePassSuccess'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+  ['acctLoginError','acctRegError','acctChangePassError','acctChangePassSuccess','acctChangeUserError','acctChangeUserSuccess'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
 }
 function updateAccountModalView(){
   const guestView = document.getElementById('acctGuestView');
@@ -4035,11 +4060,32 @@ async function handleChangePassword(ev){
   return false;
 }
 
+function toggleChangeUsernameForm(){
+  const form = document.getElementById('acctChangeUserForm');
+  form.style.display = form.style.display==='none' ? 'block' : 'none';
+}
+async function handleChangeUsername(ev){
+  ev.preventDefault();
+  const errEl = document.getElementById('acctChangeUserError'); errEl.textContent = '';
+  const okEl = document.getElementById('acctChangeUserSuccess'); okEl.textContent = '';
+  const newUser = document.getElementById('acctNewUsername').value.trim();
+  const pass = document.getElementById('acctUserChangePass').value;
+  try{
+    await syncChangeUsername(newUser, pass);
+    okEl.textContent = 'Usuário trocado com sucesso.';
+    document.getElementById('acctChangeUserForm').reset();
+    updateAccountModalView(); // refletir o novo nome de usuário exibido no modal
+  }catch(e){ errEl.textContent = e.message || 'Erro ao trocar usuário'; }
+  return false;
+}
+
 window.openAccountModal = openAccountModal;
 window.closeAccountModal = closeAccountModal;
 window.switchAccountTab = switchAccountTab;
 window.handleAccountLogin = handleAccountLogin;
 window.handleAccountRegister = handleAccountRegister;
+window.toggleChangeUsernameForm = toggleChangeUsernameForm;
+window.handleChangeUsername = handleChangeUsername;
 window.handleAccountLogout = handleAccountLogout;
 window.toggleChangePasswordForm = toggleChangePasswordForm;
 window.handleChangePassword = handleChangePassword;
