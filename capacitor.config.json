@@ -1,0 +1,9 @@
+{
+  "appId": "com.billu.guiapatins",
+  "appName": "Guia de Patins",
+  "webDir": "www",
+  "backgroundColor": "#15161A",
+  "android": {
+    "allowMixedContent": false
+  }
+}

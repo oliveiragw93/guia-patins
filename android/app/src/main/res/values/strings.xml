@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Guia de Patins</string>
+    <string name="title_activity_main">Guia de Patins</string>
+    <string name="package_name">com.billu.guiapatins</string>
+    <string name="custom_url_scheme">com.billu.guiapatins</string>
+</resources>
